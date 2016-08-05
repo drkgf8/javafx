@@ -1,5 +1,12 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package motion;
 
+import java.util.ArrayList;
+import java.util.List;
 import javafx.animation.Animation;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
@@ -8,8 +15,10 @@ import javafx.animation.ParallelTransition;
 import javafx.animation.PathTransition;
 import javafx.animation.PathTransition.OrientationType;
 import javafx.animation.RotateTransition;
+import javafx.animation.SequentialTransition;
 import javafx.animation.Timeline;
 import javafx.application.Application;
+import javafx.event.EventType;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Group;
 import javafx.scene.Parent;
@@ -17,6 +26,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.ArcTo;
@@ -55,28 +65,30 @@ public class Motion extends Application {
     public void start(Stage stage) {
         
         
-        rectangle2 = new Rectangle(50,50,50,50);
-        rectangle = new Rectangle(50,50,50,50);
-        rectangle.setLayoutX(100);
-        rectangle.setLayoutY(100);
-        rectangle2.setLayoutX(105);
-        rectangle2.setLayoutY(100);
+        rectangle2 = new Rectangle(155,50,50,50);
+        rectangle = new Rectangle(150,50,50,50);
         rectangle.setFill(Color.BLACK);
         rectangle2.setFill(Color.BLUE);
-        double blackBoxX = rectangle.getLayoutX();
-        double blackBoxY = rectangle.getLayoutY();
-        double blueBoxX = rectangle2.getLayoutX();
-        double blueBoxY = rectangle2.getLayoutY();
-        System.out.println("rectangle "+blackBoxX+":"+blackBoxY);
-        System.out.println("rectangle2 "+blueBoxX+":"+blueBoxY);
         
+        Group recGroup = new Group(rectangle, rectangle2);
         //final Image image1 = new Image(getClass().getResourceAsStream("duke_44x80.png"));
         //final ImageView imageView = new ImageView();
         //imageView.setImage(image1);
         
         Path path = new Path();
-        path.getElements().add(new MoveTo(75, 75));
-        path.getElements().add(new LineTo(35, 75));
+        path.getElements().add(new MoveTo(175, 75));
+        path.getElements().add(new LineTo(135, 75));
+        
+        Path returnPath = new Path();
+        returnPath.getElements().add(new MoveTo(135, 75));
+        returnPath.getElements().add(new LineTo(180, 75));
+        returnPath.setStrokeWidth(1);
+        returnPath.setStroke(Color.BLACK);
+        PathTransition returnAnim = new PathTransition(new Duration(500.0), returnPath, rectangle);
+        returnAnim.setOrientation(OrientationType.NONE);
+        returnAnim.setInterpolator(Interpolator.LINEAR);
+        returnAnim.setAutoReverse(false);
+        returnAnim.setCycleCount((int) 1.0);
         //path.getElements().add(new LineTo(100, 200));
         //path.getElements().add(new LineTo(100, 100));
         //path.getElements().add(new LineTo(200, 100));
@@ -85,14 +97,16 @@ public class Motion extends Application {
         PathTransition anim = new PathTransition(new Duration(500.0), path, rectangle);
         anim.setOrientation(OrientationType.NONE);
         anim.setInterpolator(Interpolator.LINEAR);
-        anim.setAutoReverse(true);
-        anim.setCycleCount((int) 2.0);
+        anim.setAutoReverse(false);
+        anim.setCycleCount((int) 1.0);
+        
+        SequentialTransition seqTrans = new SequentialTransition(rectangle, anim, returnAnim);
         
         Path pathSlide = new Path();
-        pathSlide.getElements().add(new MoveTo(80, 75));
-        pathSlide.getElements().add(new LineTo(78,75));
+        pathSlide.getElements().add(new MoveTo(180, 75));
+        pathSlide.getElements().add(new LineTo(175,75));
         path.setStrokeWidth(1);
-        PathTransition animSlide = new PathTransition(new Duration(2000.0), path, rectangle2);
+        PathTransition animSlide = new PathTransition(new Duration(2000.0), pathSlide, rectangle2);
         animSlide.setOrientation(OrientationType.NONE);
         animSlide.setInterpolator(Interpolator.EASE_IN);
         animSlide.setAutoReverse(false);
@@ -120,7 +134,7 @@ public class Motion extends Application {
         ft.setAutoReverse(false);**/
         
         
-        ParallelTransition pt = new ParallelTransition(rectangle, rotateTransition, anim, animSlide);
+        ParallelTransition pt = new ParallelTransition(rotateTransition, seqTrans, animSlide);
         //pt.playFromStart();
         
         /**Text text = new Text("This is a test");
@@ -131,7 +145,9 @@ public class Motion extends Application {
         text.getTransforms().add(new Rotate(30, 50, 30));
         text.setLayoutX(200);
         text.setLayoutY(20);**/
-        
+        /*rectangle.addEventHandler(MouseEvent.MOUSE_CLICKED, (MouseEvent event) -> {
+            pt.play();
+        });*/
         Button startButtonRec = new Button("playRecFromStart");
         startButtonRec.setOnAction(e -> pt.playFromStart());
         Button resetButton = new Button("Reset");
@@ -143,7 +159,7 @@ public class Motion extends Application {
         resetButton.setLayoutY(320);
        
      
-        pt.setOnFinished(e -> getFinalDetails());
+        
         
        
         
@@ -153,10 +169,16 @@ public class Motion extends Application {
 
     
        
+        //Group recGroup = new Group(rectangle, rectangle2);
+        List recChildren = recGroup.getChildren();
+        System.out.println("This is " + recChildren.get(0));
         
-        Group group = new Group(rectangle, rectangle2, startButtonRec, resetButton);
+        recGroup.addEventHandler(MouseEvent.MOUSE_CLICKED, (MouseEvent event) -> {
+            pt.play();
+        });
+        Group group = new Group(recGroup, startButtonRec, resetButton);
         rectangle.toFront();
-        Scene scene = new Scene(group, 800, 800);
+        Scene scene = new Scene(group, 600, 600);
 
         
 
