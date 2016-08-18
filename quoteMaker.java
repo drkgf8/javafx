@@ -36,10 +36,12 @@ import javafx.animation.PathTransition;
 import javafx.animation.RotateTransition;
 import javafx.animation.SequentialTransition;
 import javafx.animation.Timeline;
+import javafx.geometry.Insets;
 import javafx.scene.shape.LineTo;
 import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
 import javafx.scene.transform.Rotate;
 import javafx.util.Duration;
 
@@ -53,31 +55,48 @@ public class QuoteMaker extends Application {
   ArrayList<String> backResults = new ArrayList<String>();
   ArrayList<Notecard> notecards = new ArrayList<Notecard>();
   ArrayList<String> relatedResults = new ArrayList<String>();
-  Stack startStack;
+  Stack focusStack;
   Label newQuote = new Label();
   StackPane sp = new StackPane();
   int finalX = 0;
   int finalY = 0;
   final ObjectProperty<Label> selectedQuote = new SimpleObjectProperty<>();
   int globalIdx = 0;
+  MessageBoard messageBoard;
+  Label background = new Label();
 
   public static void main(String[] args) throws Exception { launch(args); }
   public void start(final Stage stage) throws Exception {
     //selectedQuote.set(new Label());
+    
+    // create a message board on which to place quotes.
+    messageBoard = new MessageBoard();
+    int depth = 70; //Setting the uniform variable for the glow width and height
+ 
+    DropShadow borderGlow= new DropShadow();
+    borderGlow.setOffsetY(0f);
+    borderGlow.setOffsetX(0f);
+    borderGlow.setColor(Color.BLUE);
+    borderGlow.setWidth(depth);
+    borderGlow.setHeight(depth);
+
+    //messageBoard.setEffect(borderGlow); //Apply the borderGlow effect to the JavaFX node
+    messageBoard.setStyle("-fx-background-color: cornsilk; -fx-background-insets: 10; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, purple, 10, 0, 0, 0);");
+    messageBoard.setPrefSize(1000, 700);
     String stackParam1 = "os";
     String stackParam2 = "chapter1";
-    startStack = new Stack();
-    startStack = initStack(startStack, stackParam1, stackParam2);
+    focusStack = new Stack();
+    makeStack(stackParam1, stackParam2);
     stage.setTitle("NotePad Breeze");
 
-    // create a message board on which to place quotes.
-    final MessageBoard messageBoard = new MessageBoard();
-    messageBoard.setStyle("-fx-background-color: cornsilk;");
-    messageBoard.setPrefSize(1000, 700);
+    
 
     // create a control panel for the message board.
     VBox controls = new VBox(10);
-    controls.setStyle("-fx-background-color: coral; -fx-padding: 10;");
+    
+    //#8080ff
+    //#b3b3ff
+    controls.setStyle("-fx-background-color: #ccccff; -fx-padding: 10;");
     controls.setAlignment(Pos.TOP_CENTER);
 
     // create some sliders to modify properties of the existing quote.
@@ -87,18 +106,18 @@ public class QuoteMaker extends Application {
     layoutXSlider.slider.maxProperty().bind(messageBoard.widthProperty());
     final LabeledSlider layoutYSlider = new LabeledSlider("Y Pos", 0, messageBoard.getHeight(), 0);
     layoutYSlider.slider.maxProperty().bind(messageBoard.heightProperty());
-    String myLabel = "myLabel";
+    //String myLabel = "myLabel";
     
     // create a button to generate a new quote.
-    Button quoteButton = new Button("New\nQuote");
+    /*Button quoteButton = new Button("New\nQuote");
     quoteButton.setStyle("-fx-font-size: 18px; -fx-text-alignment: center; -fx-padding: 10; -fx-graphic-text-gap: 10;");
     quoteButton.setGraphic(new ImageView(new Image("http://img.freebase.com/api/trans/image_thumb/en/benjamin_franklin?pad=1&errorid=%2Ffreebase%2Fno_image_png&maxheight=64&mode=fillcropmid&maxwidth=64")));
     quoteButton.setMaxWidth(Double.MAX_VALUE);
     quoteButton.setOnAction(new EventHandler<ActionEvent>() {
       @Override public void handle(ActionEvent actionEvent) {
         // post a new quote to the message board and select it.
-        sp = messageBoard.post(startStack.notecards.get(startStack.index).getFrontData(), colors.next());
-        startStack.incIndex();
+        sp = messageBoard.post(focusStack.notecards.get(focusStack.index).getFrontData(), colors.next());
+        focusStack.incIndex();
         for(int i = 0; i < 3; ++i){
             if(myLabel.equals(sp.getChildren().get(i).getId())){
                 newQuote = (Label)sp.getChildren().get(i);
@@ -114,8 +133,12 @@ public class QuoteMaker extends Application {
           }
         });
       }
-    });
+    });*/
+    Text relatedTitle = new Text();
+    relatedTitle.setText("Related Stacks");
     
+    relatedTitle.setStyle("-fx-text-fill: #6666ff; -fx-font: 16px 'Segoe Script';");
+    initMessageBoard(widthSlider, heightSlider);
     final Label quotedText = new Label();
     quotedText.setWrapText(true);
     quotedText.setStyle("-fx-font-size: 16px;");
@@ -134,6 +157,7 @@ public class QuoteMaker extends Application {
           // associate the sliders with the new quote.
           widthSlider.slider.valueProperty().bindBidirectional(newQuote.prefWidthProperty());
           heightSlider.slider.valueProperty().bindBidirectional(newQuote.prefHeightProperty());
+          
           layoutXSlider.slider.valueProperty().bindBidirectional(sp.layoutXProperty());
           layoutYSlider.slider.valueProperty().bindBidirectional(sp.layoutYProperty());
 
@@ -142,17 +166,22 @@ public class QuoteMaker extends Application {
         }
       }
     });
-    postMessageBoard(messageBoard, widthSlider, heightSlider);
+    
+    
+    //postMessageBoard(messageBoard, widthSlider, heightSlider);
     //Button animate = new Button("animate");
     VBox relatedNotecards = getRelated();
-    
-    controls.getChildren().addAll(relatedNotecards, new Separator(), quoteButton, new Separator(), widthSlider, heightSlider, layoutXSlider, layoutYSlider, new Separator());
+    relatedNotecards.setStyle(" -fx-background-color: cornsilk; -fx-background-insets: 3; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, #ccccff, 10, 0, 0, 0);");
+    Text dimensions = new Text();
+    dimensions.setText("Notecard\nDimensions");
+    dimensions.setStyle("-fx-text-fill: #6666ff; -fx-font: 16px 'Segoe Script';");
+    controls.getChildren().addAll(relatedTitle, new Separator(), relatedNotecards, new Separator(), dimensions, new Separator(), widthSlider, heightSlider, layoutXSlider, layoutYSlider, new Separator());
     controls.setPrefWidth(180);
     controls.setMinWidth(180);
     controls.setMaxWidth(Control.USE_PREF_SIZE);
 
     // wire up the slider controls to the selected quote.
-    selectedQuote.addListener(new ChangeListener<Label>() {
+    /*selectedQuote.addListener(new ChangeListener<Label>() {
       @Override public void changed(ObservableValue<? extends Label> observableValue, Label oldQuote, final Label newQuote) {
         //if (oldQuote != null) {
           // disassociate the sliders from the old quote.
@@ -173,7 +202,7 @@ public class QuoteMaker extends Application {
           quotedText.textProperty().bind(newQuote.textProperty());
         //}
       }
-    });
+    });*/
 
     // layout the scene.
     HBox layout = new HBox();
@@ -199,20 +228,57 @@ public class QuoteMaker extends Application {
     //animate.setOnAction(e-> makeAnimation(newQuote));
   }
   
-  public Stack fillDbData(Stack stack, String param1, String param2){
+  public void makeStack(String param1, String param2){
+      Stack stack = new Stack();
       ArrayList<String> front = fillFront(param1, param2);
       ArrayList<String> back = fillBack(param1, param2);
-      
+      stack.related = getRelatedQuery();
       for(int i = 0; i < front.size(); ++i){
           stack.notecards.add(new Notecard(front.get(i), back.get(i)));
       }
-      return stack;
+      
+      focusStack = stack;
+      
+      if(selectedQuote.get() != null){
+          postMessageBoard();
+      }
+      
+  }
+  //init and post message boards have different signatures because of constraints with the change listener in start
+  public void initMessageBoard(LabeledSlider widthSlider, LabeledSlider heightSlider){
+      String myLabel = "myLabel";
+      String backLabel = "back";
+      final StackPane sp = messageBoard.post(focusStack.notecards.get(focusStack.index).getFrontData(), colors.next());
+        //focusStack.incIndex();
+        for(int i = 0; i < 3; ++i){
+            if(myLabel.equals(sp.getChildren().get(i).getId())){
+                newQuote = (Label)sp.getChildren().get(i);
+            }
+            
+        }
+        
+        selectedQuote.set(newQuote);
+        // make the new quote the selected quote when it is been clicked.
+        sp.setOnMouseClicked(new EventHandler<MouseEvent>() {
+          @Override public void handle(MouseEvent mouseEvent) {
+            selectedQuote.set(newQuote);
+            sp.toFront();
+          }
+        });
+        
+        widthSlider.slider.valueProperty().bindBidirectional(newQuote.prefWidthProperty());
+        heightSlider.slider.valueProperty().bindBidirectional(newQuote.prefHeightProperty());
+        
   }
   
-  public void postMessageBoard(MessageBoard messageBoard, LabeledSlider widthSlider, LabeledSlider heightSlider){
+  public void postMessageBoard(){
+      System.out.println("in post");
       String myLabel = "myLabel";
-      sp = messageBoard.post(startStack.notecards.get(startStack.index).getFrontData(), colors.next());
-        startStack.incIndex();
+      final StackPane sp = messageBoard.post(focusStack.notecards.get(focusStack.index).getFrontData(), colors.next());
+      
+      int numChildren = messageBoard.getChildren().size();
+      System.out.println("numChildren " + numChildren);
+        focusStack.incIndex();
         for(int i = 0; i < 3; ++i){
             if(myLabel.equals(sp.getChildren().get(i).getId())){
                 newQuote = (Label)sp.getChildren().get(i);
@@ -232,20 +298,27 @@ public class QuoteMaker extends Application {
         //heightSlider.slider.valueProperty().bindBidirectional(newQuote.prefHeightProperty());
   }
   
+  
   public VBox getRelated(){
       VBox temp = new VBox();
-      ArrayList<String> results = getRelatedQuery();
-      for(int i = 0; i < results.size(); ++i){
+     
+      
+      for(int i = 0; i < focusStack.related.size(); ++i){
           Label label = new Label();
-          final String relatedResults = results.get(i);
-          /*label.setOnMouseClicked(new EventHandler<MouseEvent>() {
+          String relatedResults = focusStack.related.get(i);
+          String[] resultsArr = relatedResults.split(" ");//split up the db keywords and send them to makeStack
+          final String param1 = resultsArr[0];
+          final String param2 = resultsArr[1];
+          label.setOnMouseClicked(new EventHandler<MouseEvent>() {
           @Override public void handle(MouseEvent mouseEvent) {
-            makeStack(relatedResults);
+            makeStack(param1, param2);
           }
-        });*/
-          label.setText(results.get(i));
+        });
+          label.setText(relatedResults);
           //String bgColor = "#" + color.deriveColor(color.getHue(), color.getSaturation(), color.getBrightness(), random.nextDouble() * 0.5 + 0.5).toString().substring(2, 10);
           label.setStyle("-fx-background-radius: 5; -fx-background-color: #6666ff; -fx-text-fill: white; -fx-font: 12px 'Segoe Script'; -fx-padding:10;");
+          
+          //label.setStyle("-fx-box-shadow: 0 0 0 3px #fff, 0 0 0 5px #ddd, 0 0 0 10px #fff, 0");
           label.setWrapText(true);
           label.setAlignment(Pos.CENTER);
           label.setTextAlignment(TextAlignment.CENTER);
@@ -260,53 +333,7 @@ public class QuoteMaker extends Application {
       return temp;
   }
   
-  public void makeStack(String queryParam){
-      String[] paramArray = queryParam.split(" ");
-      String param1 = paramArray[0];
-      String param2 = paramArray[1];
-       PreparedStatement pstmt = null;
-        Connection conn = null;
-        Statement stmt = null;
-        Statement stmtBack = null;
-        try {
-          // get connection to an Oracle database
-          conn = getMySqlConnection();
-          /*String query = "select front from notecard where id = ? AND subcategory1='os';";
-          pstmt = conn.prepareStatement(query); // create a statement
-          pstmt.setInt(1, 1); // set input parameter 1
-          pstmt.executeUpdate();*/
-          
-          stmt = conn.createStatement();
-          String sql;
-          String os = "os";
-          sql = "select front from notecard where subcategory1=? AND stackname=?;";
-          pstmt = conn.prepareStatement(sql); // create a statement
-          pstmt.setString(1, param1); // set input parameter 1
-          pstmt.setString(2, param2);
-          ResultSet rs = pstmt.executeQuery();
-          //ResultSet rs = stmt.executeQuery(sql);
-          while(rs.next()){
-              //quotes.quotes.add(rs.getString("front"));
-              frontResults.add(rs.getString("front"));
-          }
-              
-          }
-          
-          catch (Exception e) {
-          // handle the exception
-          e.printStackTrace();
-          System.exit(1);
-        } finally {
-          // release database resources
-          try {
-            conn.close();
-          } catch (Exception ignore) {
-          }
-        }
-          
-    }
-      
-      
+
   
   
   public ArrayList<String> getRelatedQuery(){
@@ -368,22 +395,29 @@ public class QuoteMaker extends Application {
     }
 
     StackPane post(String quote, Color color) {
-      // choose a quote and style it.
+      System.out.println("in messageboard.post");
       final Label label = new Label(quote);
       label.setId("myLabel");
+      //-fx-background-image: url('flipThickGrey.png');ladder(" + bgColor +", lavender 49%, midnightblue 50%);-fx-opacity: 0.5;
       String bgColor = "#" + color.deriveColor(color.getHue(), color.getSaturation(), color.getBrightness(), random.nextDouble() * 0.5 + 0.5).toString().substring(2, 10);
-      label.setStyle("-fx-background-radius: 5; -fx-background-color: linear-gradient(to bottom, " + bgColor + ", derive(" + bgColor + ", 20%)); -fx-text-fill: ladder(" + bgColor +", lavender 49%, midnightblue 50%); -fx-font: 18px 'Segoe Script'; -fx-padding:10;");
+      label.setStyle("-fx-background-radius: 5; -fx-background-color: linear-gradient(to bottom, " + bgColor + ", derive(" + bgColor + ", 20%)); -fx-text-fill:black;  -fx-font: 18px 'Segoe Script'; -fx-font-weight: bold;; -fx-padding:10; -fx-border-color: white; -fx-border-width: 4px; -fx-background-image: url('notecardBackFixed.png');");
       label.setWrapText(true);
       label.setAlignment(Pos.CENTER);
       label.setTextAlignment(TextAlignment.CENTER);
       final DropShadow dropShadow = new DropShadow();
       final Glow glow = new Glow();
       label.setEffect(dropShadow);
+      /*final Label labelBack = new Label();
+      labelBack.setStyle("-fx-background-image: url('borderRope.jpg');");
+      labelBack.setPrefSize(236, 283);
+      labelBack.setId("back");*/
 
       // give the quote a random fixed size and position.
       label.setMinSize(Label.USE_PREF_SIZE, Label.USE_PREF_SIZE);
-      int prefSizeX = random.nextInt(150) + 300;
-      int prefSizeY = random.nextInt(150) + 75;
+      int prefSizeX = 200;
+      int prefSizeY = 250;
+      //int prefSizeX = random.nextInt(150) + 300;
+      //int prefSizeY = random.nextInt(150) + 75;
       label.setPrefSize(prefSizeX, prefSizeY);
       label.setMaxSize(Label.USE_PREF_SIZE, Label.USE_PREF_SIZE);
       int x = random.nextInt((int) Math.floor(this.getPrefWidth() - label.getPrefWidth()));
@@ -393,25 +427,8 @@ public class QuoteMaker extends Application {
       label.relocate(
         x,y
       );
-      /*final Label label1 = new Label(quote);
-      //String bgColor = "#" + color.deriveColor(color.getHue(), color.getSaturation(), color.getBrightness(), random.nextDouble() * 0.5 + 0.5).toString().substring(2, 10);
-      label1.setStyle("-fx-background-radius: 5; -fx-background-color: linear-gradient(to bottom, " + bgColor + ", derive(" + bgColor + ", 20%)); -fx-text-fill: ladder(" + bgColor +", lavender 49%, midnightblue 50%); -fx-font: 18px 'Segoe Script'; -fx-padding:10;");
-      label1.setWrapText(true);
-      label1.setAlignment(Pos.CENTER);
-      label1.setTextAlignment(TextAlignment.CENTER);
-      //final DropShadow dropShadow1 = new DropShadow();
-      //final Glow glow1 = new Glow();
-      label.setEffect(dropShadow);
-
-      // give the quote a random fixed size and position.
-      label1.setMinSize(Label.USE_PREF_SIZE, Label.USE_PREF_SIZE);
-      label1.setPrefSize(prefSizeX, prefSizeY);
-      label1.setMaxSize(Label.USE_PREF_SIZE, Label.USE_PREF_SIZE);
-      label1.relocate(
-        x,y
-      );*/
-      System.out.println("getlayoutX: " + label.getLayoutX() + " " + x);
-      System.out.println("getlayoutX: " + label.getLayoutY() + " " + y);
+      
+      
       // allow the label to be dragged around.
       StackPane sp = new StackPane();
       final Delta dragDelta = new Delta();
@@ -484,13 +501,13 @@ public class QuoteMaker extends Application {
       im.setFitHeight(20);
       flipIt.setGraphic(im);
       flipIt.setOnAction(e -> {
-          if(startStack.notecards.get(startStack.index).isFront){
-              label.setText(startStack.notecards.get(startStack.index).getBackData());
-              startStack.notecards.get(startStack.index).setisFront(false);
+          if(focusStack.notecards.get(focusStack.index).isFront){
+              label.setText(focusStack.notecards.get(focusStack.index).getBackData());
+              focusStack.notecards.get(focusStack.index).setisFront(false);
           }
           else{
-              label.setText(startStack.notecards.get(startStack.index).getFrontData());
-              startStack.notecards.get(startStack.index).setisFront(true);
+              label.setText(focusStack.notecards.get(focusStack.index).getFrontData());
+              focusStack.notecards.get(focusStack.index).setisFront(true);
           }
           
               });
@@ -500,20 +517,23 @@ public class QuoteMaker extends Application {
       imNext.setFitHeight(20);
       next.setGraphic(imNext);
       next.setOnAction(e -> {
-          if(startStack.index < startStack.notecards.size()-1){//index has to restart when it hits the size of the array
-              startStack.incIndex();
+          if(focusStack.index < focusStack.notecards.size()-1){//index has to restart when it hits the size of the array
+              focusStack.incIndex();
           }
           else{
-              startStack.resetIndex();
+              focusStack.resetIndex();
           }
-          label.setText(startStack.notecards.get(startStack.index).getFrontData());
+          label.setText(focusStack.notecards.get(focusStack.index).getFrontData());
               });
       //StackPane sp = new StackPane();
       StackPane.setAlignment(flipIt, Pos.BOTTOM_LEFT);
       StackPane.setAlignment(next, Pos.BOTTOM_RIGHT);
       sp.getChildren().addAll(label, flipIt, next);
       sp.relocate(x, y);
+      System.out.println("sp x:y " +sp.getLayoutX() + ":" + sp.getLayoutY());
       this.getChildren().addAll(sp);
+      
+      
 
       return sp;
     }
@@ -735,11 +755,11 @@ public class QuoteMaker extends Application {
         
     }
      
-     public Stack initStack(Stack stack, String param1, String param2){
+    /* public Stack initStack(Stack stack, String param1, String param2){
         stack = fillDbData(stack, param1, param2);
-        
+        stack.related = getRelatedQuery();
         return stack;
-    }
+    }*/
     
      class Notecard {
          String frontData;
@@ -781,7 +801,7 @@ public class QuoteMaker extends Application {
      class Stack {
          int index = 0;
          ArrayList<Notecard> notecards;
-         
+         ArrayList<String> related = new ArrayList<String>(); // These are query keywords, unitialized stacks. 
          public Stack(){
              notecards = new ArrayList<Notecard>();
          }
@@ -797,6 +817,8 @@ public class QuoteMaker extends Application {
          public void resetIndex(){
              index = 0;
          }
+         
+         
      }
     
     
