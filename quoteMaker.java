@@ -45,31 +45,24 @@ import javafx.scene.text.Text;
 import javafx.scene.transform.Rotate;
 import javafx.util.Duration;
 
-// allows you to add random quotes to a message board.
+
 public class QuoteMaker extends Application {
-  // setup some data for quotes to add to a message board.
+  
   final Random random = new Random();
-  final Quotes quotes = new Quotes();
+  
   final Colors colors = new Colors();
-  ArrayList<String> frontResults = new ArrayList<String>();
-  ArrayList<String> backResults = new ArrayList<String>();
-  ArrayList<Notecard> notecards = new ArrayList<Notecard>();
-  ArrayList<String> relatedResults = new ArrayList<String>();
+  
   Stack focusStack;
   Label newQuote = new Label();
   StackPane sp = new StackPane();
-  int finalX = 0;
-  int finalY = 0;
   final ObjectProperty<Label> selectedQuote = new SimpleObjectProperty<>();
-  int globalIdx = 0;
+  String cardIdx;
   MessageBoard messageBoard;
   Label background = new Label();
 
   public static void main(String[] args) throws Exception { launch(args); }
   public void start(final Stage stage) throws Exception {
-    //selectedQuote.set(new Label());
     
-    // create a message board on which to place quotes.
     messageBoard = new MessageBoard();
     int depth = 70; //Setting the uniform variable for the glow width and height
  
@@ -85,7 +78,7 @@ public class QuoteMaker extends Application {
     messageBoard.setPrefSize(1000, 700);
     String stackParam1 = "os";
     String stackParam2 = "chapter1";
-    focusStack = new Stack();
+    //focusStack = new Stack();
     makeStack(stackParam1, stackParam2);
     stage.setTitle("NotePad Breeze");
 
@@ -106,38 +99,11 @@ public class QuoteMaker extends Application {
     layoutXSlider.slider.maxProperty().bind(messageBoard.widthProperty());
     final LabeledSlider layoutYSlider = new LabeledSlider("Y Pos", 0, messageBoard.getHeight(), 0);
     layoutYSlider.slider.maxProperty().bind(messageBoard.heightProperty());
-    //String myLabel = "myLabel";
-    
-    // create a button to generate a new quote.
-    /*Button quoteButton = new Button("New\nQuote");
-    quoteButton.setStyle("-fx-font-size: 18px; -fx-text-alignment: center; -fx-padding: 10; -fx-graphic-text-gap: 10;");
-    quoteButton.setGraphic(new ImageView(new Image("http://img.freebase.com/api/trans/image_thumb/en/benjamin_franklin?pad=1&errorid=%2Ffreebase%2Fno_image_png&maxheight=64&mode=fillcropmid&maxwidth=64")));
-    quoteButton.setMaxWidth(Double.MAX_VALUE);
-    quoteButton.setOnAction(new EventHandler<ActionEvent>() {
-      @Override public void handle(ActionEvent actionEvent) {
-        // post a new quote to the message board and select it.
-        sp = messageBoard.post(focusStack.notecards.get(focusStack.index).getFrontData(), colors.next());
-        focusStack.incIndex();
-        for(int i = 0; i < 3; ++i){
-            if(myLabel.equals(sp.getChildren().get(i).getId())){
-                newQuote = (Label)sp.getChildren().get(i);
-            }
-        }
-        
-        selectedQuote.set(newQuote);
-        // make the new quote the selected quote when it is been clicked.
-        sp.setOnMouseClicked(new EventHandler<MouseEvent>() {
-          @Override public void handle(MouseEvent mouseEvent) {
-            selectedQuote.set(newQuote);
-            sp.toFront();
-          }
-        });
-      }
-    });*/
+   
     Text relatedTitle = new Text();
     relatedTitle.setText("Related Stacks");
     
-    relatedTitle.setStyle("-fx-text-fill: #6666ff; -fx-font: 16px 'Segoe Script';");
+    relatedTitle.setStyle("-fx-text-fill: #6666ff; -fx-font: 16px 'Times New Roman';");
     initMessageBoard(widthSlider, heightSlider);
     final Label quotedText = new Label();
     quotedText.setWrapText(true);
@@ -161,7 +127,7 @@ public class QuoteMaker extends Application {
           layoutXSlider.slider.valueProperty().bindBidirectional(sp.layoutXProperty());
           layoutYSlider.slider.valueProperty().bindBidirectional(sp.layoutYProperty());
 
-          // bind the quote summary with the new quotes' text
+          
           quotedText.textProperty().bind(newQuote.textProperty());
         }
       }
@@ -170,39 +136,20 @@ public class QuoteMaker extends Application {
     
     //postMessageBoard(messageBoard, widthSlider, heightSlider);
     //Button animate = new Button("animate");
+    ImageView logo = new ImageView(new Image("logo1.PNG"));
+    logo.setFitWidth(180);
+    logo.setFitHeight(60);
     VBox relatedNotecards = getRelated();
     relatedNotecards.setStyle(" -fx-background-color: cornsilk; -fx-background-insets: 3; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, #ccccff, 10, 0, 0, 0);");
     Text dimensions = new Text();
     dimensions.setText("Notecard\nDimensions");
-    dimensions.setStyle("-fx-text-fill: #6666ff; -fx-font: 16px 'Segoe Script';");
-    controls.getChildren().addAll(relatedTitle, new Separator(), relatedNotecards, new Separator(), dimensions, new Separator(), widthSlider, heightSlider, layoutXSlider, layoutYSlider, new Separator());
+    dimensions.setStyle("-fx-text-fill: #6666ff; -fx-font: 16px 'Times New Roman';");
+    controls.getChildren().addAll(logo, relatedTitle, new Separator(), relatedNotecards, new Separator(), dimensions, new Separator(), widthSlider, heightSlider, layoutXSlider, layoutYSlider, new Separator());
     controls.setPrefWidth(180);
     controls.setMinWidth(180);
     controls.setMaxWidth(Control.USE_PREF_SIZE);
 
-    // wire up the slider controls to the selected quote.
-    /*selectedQuote.addListener(new ChangeListener<Label>() {
-      @Override public void changed(ObservableValue<? extends Label> observableValue, Label oldQuote, final Label newQuote) {
-        //if (oldQuote != null) {
-          // disassociate the sliders from the old quote.
-          widthSlider.slider.valueProperty().unbindBidirectional(oldQuote.prefWidthProperty());
-          heightSlider.slider.valueProperty().unbindBidirectional(oldQuote.prefHeightProperty());
-          layoutXSlider.slider.valueProperty().unbindBidirectional(sp.layoutXProperty());
-          layoutYSlider.slider.valueProperty().unbindBidirectional(sp.layoutYProperty());
-        //}
-
-        //if (newQuote != null) {
-          // associate the sliders with the new quote.
-          widthSlider.slider.valueProperty().bindBidirectional(newQuote.prefWidthProperty());
-          heightSlider.slider.valueProperty().bindBidirectional(newQuote.prefHeightProperty());
-          layoutXSlider.slider.valueProperty().bindBidirectional(sp.layoutXProperty());
-          layoutYSlider.slider.valueProperty().bindBidirectional(sp.layoutYProperty());
-
-          // bind the quote summary with the new quotes' text
-          quotedText.textProperty().bind(newQuote.textProperty());
-        //}
-      }
-    });*/
+    
 
     // layout the scene.
     HBox layout = new HBox();
@@ -229,7 +176,8 @@ public class QuoteMaker extends Application {
   }
   
   public void makeStack(String param1, String param2){
-      Stack stack = new Stack();
+      String title = param1 +" " + param2;
+      Stack stack = new Stack(title);
       ArrayList<String> front = fillFront(param1, param2);
       ArrayList<String> back = fillBack(param1, param2);
       stack.related = getRelatedQuery();
@@ -276,9 +224,9 @@ public class QuoteMaker extends Application {
       String myLabel = "myLabel";
       final StackPane sp = messageBoard.post(focusStack.notecards.get(focusStack.index).getFrontData(), colors.next());
       
-      int numChildren = messageBoard.getChildren().size();
-      System.out.println("numChildren " + numChildren);
-        focusStack.incIndex();
+      //int numChildren = messageBoard.getChildren().size();
+      //System.out.println("numChildren " + numChildren);
+        //focusStack.incIndex();
         for(int i = 0; i < 3; ++i){
             if(myLabel.equals(sp.getChildren().get(i).getId())){
                 newQuote = (Label)sp.getChildren().get(i);
@@ -414,16 +362,15 @@ public class QuoteMaker extends Application {
 
       // give the quote a random fixed size and position.
       label.setMinSize(Label.USE_PREF_SIZE, Label.USE_PREF_SIZE);
-      int prefSizeX = 200;
-      int prefSizeY = 250;
+      int prefSizeX = 500;
+      int prefSizeY = 300;
       //int prefSizeX = random.nextInt(150) + 300;
       //int prefSizeY = random.nextInt(150) + 75;
       label.setPrefSize(prefSizeX, prefSizeY);
       label.setMaxSize(Label.USE_PREF_SIZE, Label.USE_PREF_SIZE);
       int x = random.nextInt((int) Math.floor(this.getPrefWidth() - label.getPrefWidth()));
       int y = random.nextInt((int) Math.floor(this.getPrefHeight() - label.getPrefHeight()));
-      finalX = x;
-      finalY = y;
+      
       label.relocate(
         x,y
       );
@@ -494,7 +441,30 @@ public class QuoteMaker extends Application {
           dropShadow.setInput(null);
         }
       });
-
+      //Button icon = new Button();
+      ImageView imageIcon = new ImageView(new Image("Icon.PNG"));
+      imageIcon.setFitWidth(40);
+      imageIcon.setFitHeight(40);
+      
+      String title = focusStack.title.toUpperCase();
+      
+      Text notecardTitle = new Text();
+      notecardTitle.setText(title);
+      notecardTitle.setStyle("-fx-text-fill: #6666ff; -fx-font: 16px 'Times New Roman';");
+      String totalCards = Integer.toString(focusStack.notecards.size());
+      Text numNotecards = new Text();
+      System.out.println("focuStack.index: " + focusStack.index);
+      
+      focusStack.IdxProperty().addListener((observable, oldValue, newValue) -> {
+          System.out.println("fs.get " + focusStack.getIdx());
+          cardIdx = Integer.toString(focusStack.getIdx());
+            
+            numNotecards.setText(cardIdx+"|"+totalCards);
+      });
+      cardIdx = Integer.toString(focusStack.getIdx());
+      
+      numNotecards.setText(cardIdx+"|"+totalCards);
+      
       Button flipIt = new Button();
       ImageView im = new ImageView(new Image("flipThickGrey.png"));
       im.setFitWidth(20);
@@ -528,7 +498,10 @@ public class QuoteMaker extends Application {
       //StackPane sp = new StackPane();
       StackPane.setAlignment(flipIt, Pos.BOTTOM_LEFT);
       StackPane.setAlignment(next, Pos.BOTTOM_RIGHT);
-      sp.getChildren().addAll(label, flipIt, next);
+      StackPane.setAlignment(imageIcon, Pos.TOP_LEFT);
+      StackPane.setAlignment(notecardTitle, Pos.TOP_CENTER);
+      StackPane.setAlignment(numNotecards, Pos.TOP_RIGHT);
+      sp.getChildren().addAll(label, flipIt, next, imageIcon, notecardTitle, numNotecards);
       sp.relocate(x, y);
       System.out.println("sp x:y " +sp.getLayoutX() + ":" + sp.getLayoutY());
       this.getChildren().addAll(sp);
@@ -542,18 +515,7 @@ public class QuoteMaker extends Application {
   // records relative x and y co-ordinates.
   class Delta { double x, y; }
 
-  // some of Benjamin Franklin's quotes.
-  class Quotes {
-      
-    private ArrayList<String> quotes = new ArrayList<String>();
-
-    private String next() {
-      return quotes.get(random.nextInt(quotes.size()));
-    }
-    
-    private ArrayList<String> backs = new ArrayList<String>();
-    
-  }
+ 
 
   // a selection of colors for the text boxes.
   class Colors {
@@ -580,10 +542,7 @@ public class QuoteMaker extends Application {
         try {
           // get connection to an Oracle database
           conn = getMySqlConnection();
-          /*String query = "select front from notecard where id = ? AND subcategory1='os';";
-          pstmt = conn.prepareStatement(query); // create a statement
-          pstmt.setInt(1, 1); // set input parameter 1
-          pstmt.executeUpdate();*/
+          
           
           stmt = conn.createStatement();
           String sql;
@@ -595,7 +554,7 @@ public class QuoteMaker extends Application {
           ResultSet rs = pstmt.executeQuery();
           //ResultSet rs = stmt.executeQuery(sql);
           while(rs.next()){
-              quotes.quotes.add(rs.getString("front"));
+              
               front.add(rs.getString("front"));
           }
               
@@ -624,10 +583,7 @@ public class QuoteMaker extends Application {
         try {
           // get connection to an Oracle database
           conn = getMySqlConnection();
-          /*String query = "select front from notecard where id = ? AND subcategory1='os';";
-          pstmt = conn.prepareStatement(query); // create a statement
-          pstmt.setInt(1, 1); // set input parameter 1
-          pstmt.executeUpdate();*/
+          
           stmt = conn.createStatement();
           String sql;
           sql = "select back from notecard where subcategory1=? AND stackname=?;";
@@ -637,7 +593,7 @@ public class QuoteMaker extends Application {
           ResultSet rs = pstmt.executeQuery();
           
           while(rs.next()){
-              quotes.backs.add(rs.getString("back"));
+              //.backs.add(rs.getString("back"));
               back.add(rs.getString("back"));
           }
               
@@ -668,99 +624,7 @@ public class QuoteMaker extends Application {
         return conn;
     }
     
-     public void makeAnimation(Label frontCard){
-        PathTransition frontAnim = makeFrontAnimation(frontCard);
-        RotateTransition rotate = makeRotateAnimation(frontCard);
-        //PathTransition groupSlide = makeSlideAnimation(width+5, height);
-        ParallelTransition pt = new ParallelTransition(frontAnim, rotate);
-        
-        
-        Timeline timeline = new Timeline(
-                new KeyFrame(
-                        new Duration(500),
-                        new EventHandler<ActionEvent>(){
-                            @Override
-                            public void handle(ActionEvent event){
-                                pt.play();
-                            }
-                        }
-                
-                )
-        
-        );
-        timeline.play();
-        
-    }
      
-     public RotateTransition makeRotateAnimation(Label frontCard){
-        
-        Rotate rotate = new Rotate(0.0, 0.0, 180.0, 0.0, Rotate.Y_AXIS);
-        frontCard.getTransforms().add(rotate);
-        RotateTransition rotateTransition = 
-            new RotateTransition(Duration.millis(1000), frontCard);
-        rotateTransition.setByAngle(180f);
-        rotateTransition.setCycleCount((int) 2.0);
-        rotateTransition.setAutoReverse(true);
-        rotateTransition.setAxis(Rotate.Y_AXIS);
-        rotateTransition.setFromAngle(0);
-        rotateTransition.setToAngle(90);
-        rotateTransition.setInterpolator(Interpolator.LINEAR);
-        rotateTransition.setRate(1);
-        //rotateTransition.setOnFinished(e -> frontCard.toBack());
-         //Rotate rotate2 = new Rotate(0.0, 0.0, 180.0, 0.0, Rotate.Y_AXIS);
-        //frontCard.getTransforms().add(rotate2);
-        /*RotateTransition rotateTransition2 = 
-            new RotateTransition(Duration.millis(700), frontCard);
-        rotateTransition2.setByAngle(0f);
-        rotateTransition2.setCycleCount((int) 1.0);
-        rotateTransition2.setAutoReverse(true);
-        rotateTransition2.setAxis(Rotate.Y_AXIS);
-        rotateTransition2.setFromAngle(90);
-        rotateTransition.setToAngle(0);
-        rotateTransition.setInterpolator(Interpolator.LINEAR);
-        rotateTransition.setRate(1);
-        
-        SequentialTransition sq = new SequentialTransition(rotateTransition, rotateTransition2);*/
-        
-        return rotateTransition;
-        
-    }
-     
-     public PathTransition makeFrontAnimation(Label frontCard){
-        
-        
-        int cardHeight = (int)frontCard.getHeight();
-        int cardWidth = (int)frontCard.getWidth();
-        double x = frontCard.getLayoutBounds().getWidth() / 2;
-        double y = frontCard.getLayoutBounds().getHeight() / 2;
-        double xLineTo = x + 100;
-        Path path = new Path();
-        path.getElements().add(new MoveTo(x, y));
-        path.getElements().add(new LineTo(xLineTo, y));
-        path.setStrokeWidth(1);
-        path.setStroke(Color.BLACK);
-        PathTransition anim = new PathTransition(new Duration(1000.0), path, frontCard);
-        anim.setOrientation(PathTransition.OrientationType.NONE);
-        anim.setInterpolator(Interpolator.LINEAR);
-        anim.setAutoReverse(true);
-        anim.setCycleCount((int) 2.0);
-        
-       
-       
-        
-        
-        //SequentialTransition seqTrans = new SequentialTransition(frontCard, anim, returnAnim);
-        
-        return anim;
-        
-    }
-     
-    /* public Stack initStack(Stack stack, String param1, String param2){
-        stack = fillDbData(stack, param1, param2);
-        stack.related = getRelatedQuery();
-        return stack;
-    }*/
-    
      class Notecard {
          String frontData;
          String backData;
@@ -799,23 +663,46 @@ public class QuoteMaker extends Application {
      }
      
      class Stack {
-         int index = 0;
+         int index;
+         public IntegerProperty Idx = new SimpleIntegerProperty();
+         String title;
          ArrayList<Notecard> notecards;
          ArrayList<String> related = new ArrayList<String>(); // These are query keywords, unitialized stacks. 
-         public Stack(){
+         public Stack(String stackTitle){
              notecards = new ArrayList<Notecard>();
+             title = stackTitle;
+             resetIndex();
+         }
+         
+         public int getIdx(){
+             return Idx.get();
+         }
+         
+         public void setIdx(int value){
+             System.out.println("value: "+value);
+             Idx.set(value);
+         }
+         
+         public IntegerProperty IdxProperty(){
+             return Idx;
          }
          
          public void incIndex(){
              index += 1;
+             System.out.println("incIndex: " + index);
+             setIdx(index+1);
          }
          
          public void decIndex(){
              index -= 1;
+             System.out.println("decIndex: " + index);
+             setIdx(index+1);
          }
          
          public void resetIndex(){
              index = 0;
+             System.out.println("resIndex: " + index);
+             setIdx(index+1);
          }
          
          
